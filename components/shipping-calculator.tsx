@@ -164,12 +164,12 @@ export function ShippingCalculator({
           </div>
 
           {/* 出發地資訊 */}
-          <div className="border-2 border-secondary bg-muted/50 p-4 mt-4">
+          {/* <div className="border-2 border-secondary bg-muted/50 p-4 mt-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
               出發地
             </p>
             <p className="text-lg font-bold text-secondary">台北市松山區</p>
-          </div>
+          </div> */}
         </div>
 
         {/* 結果區 */}
