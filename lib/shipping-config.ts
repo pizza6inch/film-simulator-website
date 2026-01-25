@@ -60,7 +60,7 @@ export interface VendorPricing {
 
 // ========== 配置資料 ==========
 
-export const vendors: Vendor[] = [{ id: "vendor_a", name: "廠商 A" }];
+export const vendors: Vendor[] = [{ id: "vendor_a", name: "富湘" }];
 
 export const regions: Region[] = [
   {
