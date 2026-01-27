@@ -313,8 +313,8 @@ export function calculateShipping(
       }
     }
 
-    // 計算噸數（取上限）
-    const tons = Math.ceil(weightKg / 1000);
+    // 計算噸數與總價
+    const tons = parseFloat((weightKg / 1000).toFixed(2));
     const totalPrice = pricePerTon * tons;
 
     return {

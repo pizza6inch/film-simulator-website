@@ -164,12 +164,12 @@ export function ShippingCalculator({
           </div>
 
           {/* 出發地資訊 */}
-          {/* <div className="border-2 border-secondary bg-muted/50 p-4 mt-4">
+          <div className="border-2 border-secondary bg-muted/50 p-4 mt-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
               出發地
             </p>
-            <p className="text-lg font-bold text-secondary">台北市松山區</p>
-          </div> */}
+            <p className="text-lg font-bold text-secondary">桃園市楊梅區</p>
+          </div>
         </div>
 
         {/* 結果區 */}
@@ -220,7 +220,7 @@ export function ShippingCalculator({
               <div className="border-2 border-secondary bg-muted/30 p-4">
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold">路線：</span>
-                  台北市松山區 → {currentRegion?.name}
+                  桃園市楊梅區 → {currentRegion?.name}
                   {selectedSubRegion && currentRegion?.subRegions && (
                     <span>
                       （
