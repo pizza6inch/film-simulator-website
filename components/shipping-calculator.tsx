@@ -83,7 +83,7 @@ export function ShippingCalculator({
   return (
     <div className="border-2 border-secondary p-6 bg-card">
       <h2 className="text-xl font-bold uppercase tracking-wide text-secondary mb-6">
-        Section 3：運費試算
+        運費試算
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

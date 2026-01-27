@@ -38,7 +38,7 @@ export function FilmRollCalculator({
   return (
     <div className="border-2 border-secondary p-6 bg-card">
       <h2 className="text-xl font-bold uppercase tracking-wide text-secondary mb-6">
-        Section 1：膠捲重量與尺寸換算
+        膠捲重量與尺寸換算
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { FilmRollCalculator } from "@/components/film-roll-calculator";
 import { PalletSimulator } from "@/components/pallet-simulator";
 import { ShippingCalculator } from "@/components/shipping-calculator";
+import { CreditNoteCalculator } from "@/components/credit-note-calculator";
 
 interface FilmRollInputs {
   thickness: number; // μm
@@ -81,6 +82,9 @@ export default function FilmRollSimulator() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Section 0: Credit Note Calculator */}
+        <CreditNoteCalculator />
+
         {/* Section 1: Weight & Dimension Calculator */}
         <FilmRollCalculator
           inputs={inputs}
