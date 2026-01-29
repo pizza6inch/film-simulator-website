@@ -282,7 +282,7 @@ export function CreditNoteCalculator() {
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (KG)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A重量 - B重量) × N × 單價
+                折讓單 = (A重量 - B重量) × N
               </p>
               <p className="text-muted-foreground font-mono text-xs">
                 稅金 = round(N × A重量 × 0.05) - round(N × B重量 × 0.05)
@@ -292,7 +292,7 @@ export function CreditNoteCalculator() {
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (M²)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A平方公尺 - B平方公尺) × N × 單價
+                折讓單 = (A平方公尺 - B平方公尺) × N
               </p>
               <p className="text-muted-foreground font-mono text-xs">
                 稅金 = round(N × A平方公尺 × 0.05) - round(N × B平方公尺 × 0.05)
