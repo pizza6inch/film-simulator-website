@@ -1,148 +1,106 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface CreditNoteInputs {
-  priceA: number; // A膠捲單價
-  priceB: number; // B膠捲單價
-  quantity: number; // 代換膠捲數量
-}
-
-interface CreditNoteResults {
-  creditNotePrice: number; // 折讓單價格（未稅）
-  taxA: number; // A稅金
-  taxB: number; // B稅金
-  creditNoteTax: number; // 折讓單稅金
-  creditNoteTotal: number; // 折讓單含稅總金額
-  isValid: boolean;
-}
-
-/**
- * Calculate credit note values
- * 折讓單價格 = (A單價 × n) − (B單價 × n)
- * A稅金 = 四捨五入(A × n × 0.05)
- * B稅金 = 四捨五入(B × n × 0.05)
- * 折讓單稅金 = A稅金 − B稅金
- */
-function calculateCreditNote(inputs: CreditNoteInputs): CreditNoteResults {
-  const { priceA, priceB, quantity } = inputs;
-
-  // Validate inputs
-  const isValid =
-    !isNaN(priceA) &&
-    !isNaN(priceB) &&
-    !isNaN(quantity) &&
-    priceA >= 0 &&
-    priceB >= 0 &&
-    quantity > 0 &&
-    Number.isInteger(quantity);
-
-  if (!isValid) {
-    return {
-      creditNotePrice: 0,
-      taxA: 0,
-      taxB: 0,
-      creditNoteTax: 0,
-      creditNoteTotal: 0,
-      isValid: false,
-    };
-  }
-
-  // Calculate credit note price (before tax)
-  const creditNotePrice = priceA * quantity - priceB * quantity;
-
-  // Calculate taxes separately and round each
-  const taxA = Math.round(priceA * quantity * 0.05);
-  const taxB = Math.round(priceB * quantity * 0.05);
-
-  // Credit note tax = A tax - B tax
-  const creditNoteTax = taxA - taxB;
-
-  // Total with tax
-  const creditNoteTotal = creditNotePrice + creditNoteTax;
-
-  return {
-    creditNotePrice,
-    taxA,
-    taxB,
-    creditNoteTax,
-    creditNoteTotal,
-    isValid: true,
-  };
-}
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectValue,
+  SelectLabel,
+} from "@/components/ui/select";
 
 export function CreditNoteCalculator() {
-  const [inputs, setInputs] = useState<CreditNoteInputs>({
-    priceA: 0,
-    priceB: 0,
-    quantity: 0,
-  });
+  const [unit, setUnit] = useState<"KG" | "M2">("KG");
 
-  const results = useMemo(() => calculateCreditNote(inputs), [inputs]);
+  // Inputs
+  const [quantity, setQuantity] = useState<number>(1);
+  const [length, setLength] = useState<number>(0); // m
+  const [thickness, setThickness] = useState<number>(0); // μm
+  const [density, setDensity] = useState<number>(1.2); // g/cm³ default 1.2
+  const [widthA, setWidthA] = useState<number>(0); // mm
+  const [widthB, setWidthB] = useState<number>(0); // mm
 
-  const handleChange = (field: keyof CreditNoteInputs, value: string) => {
-    const numValue = value === "" ? 0 : parseFloat(value);
-    setInputs((prev) => ({ ...prev, [field]: numValue }));
-  };
+  // helper: parse inputs to safe numbers
+  const q = isNaN(quantity) ? 0 : quantity;
+  const L = isNaN(length) ? 0 : length;
+  const T = isNaN(thickness) ? 0 : thickness;
+  const rho = isNaN(density) ? 1.2 : density;
+  const WA = isNaN(widthA) ? 0 : widthA;
+  const WB = isNaN(widthB) ? 0 : widthB;
 
-  const formatResult = (value: number) => {
-    if (!results.isValid) return "--";
-    return value.toLocaleString("zh-TW");
-  };
+  // Weight formula (kg) - same as existing algorithm
+  // W = T(μm) × W(mm) × L(m) × ρ(g/cm³) ÷ 1000 ÷ 1000
+  const weightA = (T * WA * L * rho) / 1000 / 1000;
+  const weightB = (T * WB * L * rho) / 1000 / 1000;
+
+  // Area (m²) = length(m) × width(m) [width(mm) → m]
+  const areaA = L * (WA / 1000);
+  const areaB = L * (WB / 1000);
+
+  // Discount & Tax based on unit
+  let discount = 0;
+  let tax = 0;
+
+  if (unit === "KG") {
+    discount = (weightA - weightB) * q;
+    tax = Math.round(q * weightA * 0.05) - Math.round(q * weightB * 0.05);
+  } else {
+    // M2
+    discount = (areaA - areaB) * q;
+    tax = Math.round(q * areaA * 0.05) - Math.round(q * areaB * 0.05);
+  }
 
   return (
     <div className="border-2 border-secondary p-6 bg-card">
       <h2 className="text-xl font-bold uppercase tracking-wide text-secondary mb-6">
-        折讓單價格試算
+        折讓單計算器
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Input Fields */}
+        {/* Inputs */}
         <div className="space-y-4">
           <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">
             輸入參數
           </h3>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="priceA"
-              className="text-xs uppercase tracking-wider"
-            >
-              A 膠捲單價（元）
+          {/* <div className="space-y-2">
+            <Label htmlFor="price" className="text-xs uppercase tracking-wider">
+              膠捲單價（到小數第 2 位）
             </Label>
             <Input
-              id="priceA"
+              id="price"
               type="number"
-              min="0"
               step="0.01"
-              value={inputs.priceA || ""}
-              onChange={(e) => handleChange("priceA", e.target.value)}
-              placeholder="例：150"
+              value={p || ""}
+              onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+              placeholder="例：100.00"
               className="border-2 border-secondary bg-background"
             />
-            <p className="text-xs text-muted-foreground">替代品單價</p>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
-            <Label
-              htmlFor="priceB"
-              className="text-xs uppercase tracking-wider"
-            >
-              B 膠捲單價（元）
+            <Label htmlFor="unit" className="text-xs uppercase tracking-wider">
+              計價單位
             </Label>
-            <Input
-              id="priceB"
-              type="number"
-              min="0"
-              step="0.01"
-              value={inputs.priceB || ""}
-              onChange={(e) => handleChange("priceB", e.target.value)}
-              placeholder="例：120"
-              className="border-2 border-secondary bg-background"
-            />
-            <p className="text-xs text-muted-foreground">原本使用品單價</p>
+            <Select value={unit} onValueChange={(v) => setUnit(v as any)}>
+              <SelectTrigger
+                className="border-2 border-secondary bg-background"
+                size="default"
+              >
+                <SelectValue placeholder="選擇單位" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>單位</SelectLabel>
+                  <SelectItem value="KG">KG</SelectItem>
+                  <SelectItem value="M2">M²</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -150,19 +108,104 @@ export function CreditNoteCalculator() {
               htmlFor="quantity"
               className="text-xs uppercase tracking-wider"
             >
-              代換膠捲數量（n）
+              膠捲數目
             </Label>
             <Input
               id="quantity"
               type="number"
               min="1"
               step="1"
-              value={inputs.quantity || ""}
-              onChange={(e) => handleChange("quantity", e.target.value)}
-              placeholder="例：100"
+              value={q || ""}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+              placeholder="例：10"
               className="border-2 border-secondary bg-background"
             />
-            <p className="text-xs text-muted-foreground">必須為正整數</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="length"
+              className="text-xs uppercase tracking-wider"
+            >
+              米數 L（m）
+            </Label>
+            <Input
+              id="length"
+              type="number"
+              value={L || ""}
+              onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+              placeholder="例：1000"
+              className="border-2 border-secondary bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="thickness"
+              className="text-xs uppercase tracking-wider"
+            >
+              厚度 T（μm）
+            </Label>
+            <Input
+              id="thickness"
+              type="number"
+              value={T || ""}
+              onChange={(e) => setThickness(parseFloat(e.target.value) || 0)}
+              placeholder="例：25"
+              className="border-2 border-secondary bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="density"
+              className="text-xs uppercase tracking-wider"
+            >
+              比重（g/cm³）預設 1.2
+            </Label>
+            <Input
+              id="density"
+              type="number"
+              step="0.01"
+              value={rho || ""}
+              onChange={(e) => setDensity(parseFloat(e.target.value) || 1.2)}
+              placeholder="1.2"
+              className="border-2 border-secondary bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="widthA"
+              className="text-xs uppercase tracking-wider"
+            >
+              幅寬 A（mm）
+            </Label>
+            <Input
+              id="widthA"
+              type="number"
+              value={WA || ""}
+              onChange={(e) => setWidthA(parseFloat(e.target.value) || 0)}
+              placeholder="例：500"
+              className="border-2 border-secondary bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="widthB"
+              className="text-xs uppercase tracking-wider"
+            >
+              幅寬 B（mm）
+            </Label>
+            <Input
+              id="widthB"
+              type="number"
+              value={WB || ""}
+              onChange={(e) => setWidthB(parseFloat(e.target.value) || 0)}
+              placeholder="例：480"
+              className="border-2 border-secondary bg-background"
+            />
           </div>
         </div>
 
@@ -172,95 +215,90 @@ export function CreditNoteCalculator() {
             計算結果
           </h3>
 
-          <div className="space-y-4">
-            <div className="border-2 border-primary bg-primary/10 p-4">
-              <p className="text-xs uppercase tracking-wider text-primary mb-1">
-                折讓單價格（未稅）
-              </p>
-              <p className="text-2xl font-bold text-primary">
-                {formatResult(results.creditNotePrice)}{" "}
-                <span className="text-sm">元</span>
-              </p>
-            </div>
+          <div className="border-2 border-primary bg-primary/10 p-4">
+            <p className="text-xs uppercase tracking-wider text-primary mb-1">
+              A 膠捲
+            </p>
+            <p className="text-2xl font-bold text-primary">
+              {weightA.toFixed(2)} <span className="text-sm">kg</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {areaA.toFixed(2)} m²
+            </p>
+          </div>
 
-            <div className="border-2 border-secondary bg-secondary/5 p-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                折讓單稅金
-              </p>
-              <p className="text-2xl font-bold text-secondary">
-                {formatResult(results.creditNoteTax)}{" "}
-                <span className="text-sm">元</span>
-              </p>
-            </div>
+          <div className="border-2 border-secondary bg-secondary/5 p-4">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              B 膠捲
+            </p>
+            <p className="text-2xl font-bold text-secondary">
+              {weightB.toFixed(2)} <span className="text-sm">kg</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {areaB.toFixed(2)} m²
+            </p>
+          </div>
 
-            <div className="border-2 border-primary bg-primary/10 p-4">
-              <p className="text-xs uppercase tracking-wider text-primary mb-1">
-                折讓單含稅總金額
-              </p>
-              <p className="text-2xl font-bold text-primary">
-                {formatResult(results.creditNoteTotal)}{" "}
-                <span className="text-sm">元</span>
-              </p>
-            </div>
+          <div className="border-2 border-primary bg-primary/10 p-4">
+            <p className="text-xs uppercase tracking-wider text-primary mb-1">
+              折讓單金額
+            </p>
+            <p className="text-2xl font-bold text-primary">
+              {discount.toFixed(2)} <span className="text-sm">元</span>
+            </p>
+          </div>
+
+          <div className="border-2 border-secondary bg-secondary/5 p-4">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
+              折讓單稅金
+            </p>
+            <p className="text-2xl font-bold text-secondary">
+              {tax.toFixed(2)} <span className="text-sm">元</span>
+            </p>
           </div>
         </div>
 
-        {/* Formula & Tax Breakdown */}
+        {/* Notes / Formula */}
         <div className="space-y-4">
           <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">
-            計算公式與稅金明細
+            計算公式
           </h3>
 
           <div className="border-2 border-secondary bg-muted/50 p-4 text-sm space-y-4">
             <div>
-              <p className="font-semibold text-secondary mb-1">折讓單價格</p>
+              <p className="font-semibold text-secondary mb-1">重量計算</p>
               <p className="text-muted-foreground font-mono text-xs">
-                (A單價 × n) − (B單價 × n)
+                W = T × W × L × ρ ÷ 1000 ÷ 1000
               </p>
             </div>
 
             <div>
-              <p className="font-semibold text-secondary mb-1">稅金計算</p>
+              <p className="font-semibold text-secondary mb-1">面積計算</p>
               <p className="text-muted-foreground font-mono text-xs">
-                A稅金 = round(A × n × 0.05)
+                M² = L × (W ÷ 1000)
+              </p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-secondary mb-1">折讓單 (KG)</p>
+              <p className="text-muted-foreground font-mono text-xs">
+                折讓單 = (A重量 - B重量) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                B稅金 = round(B × n × 0.05)
+                稅金 = round(N × A重量 × 0.05) - round(N × B重量 × 0.05)
+              </p>
+            </div>
+
+            <div>
+              <p className="font-semibold text-secondary mb-1">折讓單 (M²)</p>
+              <p className="text-muted-foreground font-mono text-xs">
+                折讓單 = (A平方公尺 - B平方公尺) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓稅金 = A稅金 − B稅金
+                稅金 = round(N × A平方公尺 × 0.05) - round(N × B平方公尺 × 0.05)
               </p>
             </div>
           </div>
-
-          {/* Tax Breakdown */}
-          {results.isValid && (
-            <div className="border-2 border-secondary bg-secondary/5 p-4 text-sm space-y-2">
-              <p className="font-semibold text-secondary mb-2">稅金計算明細</p>
-              <div className="flex justify-between text-muted-foreground">
-                <span>
-                  A 稅金（{inputs.priceA} × {inputs.quantity} × 5%）
-                </span>
-                <span className="font-mono">
-                  {results.taxA.toLocaleString("zh-TW")}
-                </span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>
-                  B 稅金（{inputs.priceB} × {inputs.quantity} × 5%）
-                </span>
-                <span className="font-mono">
-                  {results.taxB.toLocaleString("zh-TW")}
-                </span>
-              </div>
-              <div className="border-t border-secondary pt-2 flex justify-between font-semibold text-secondary">
-                <span>折讓稅金差額</span>
-                <span className="font-mono">
-                  {results.creditNoteTax.toLocaleString("zh-TW")}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
