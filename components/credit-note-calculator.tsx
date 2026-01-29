@@ -17,6 +17,7 @@ export function CreditNoteCalculator() {
   const [unit, setUnit] = useState<"KG" | "M2">("KG");
 
   // Inputs
+  const [price, setPrice] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
   const [length, setLength] = useState<number>(0); // m
   const [thickness, setThickness] = useState<number>(0); // μm
@@ -25,6 +26,7 @@ export function CreditNoteCalculator() {
   const [widthB, setWidthB] = useState<number>(0); // mm
 
   // helper: parse inputs to safe numbers
+  const p = isNaN(price) ? 0 : price;
   const q = isNaN(quantity) ? 0 : quantity;
   const L = isNaN(length) ? 0 : length;
   const T = isNaN(thickness) ? 0 : thickness;
@@ -46,12 +48,13 @@ export function CreditNoteCalculator() {
   let tax = 0;
 
   if (unit === "KG") {
-    discount = (weightA - weightB) * q;
-    tax = Math.round(q * weightA * 0.05) - Math.round(q * weightB * 0.05);
+    discount = (weightA - weightB) * q * p;
+    tax =
+      Math.round(q * weightA * 0.05 * p) - Math.round(q * weightB * 0.05 * p);
   } else {
     // M2
-    discount = (areaA - areaB) * q;
-    tax = Math.round(q * areaA * 0.05) - Math.round(q * areaB * 0.05);
+    discount = (areaA - areaB) * q * p;
+    tax = Math.round(q * areaA * 0.05 * p) - Math.round(q * areaB * 0.05 * p);
   }
 
   return (
@@ -67,7 +70,7 @@ export function CreditNoteCalculator() {
             輸入參數
           </h3>
 
-          {/* <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="price" className="text-xs uppercase tracking-wider">
               膠捲單價（到小數第 2 位）
             </Label>
@@ -80,7 +83,7 @@ export function CreditNoteCalculator() {
               placeholder="例：100.00"
               className="border-2 border-secondary bg-background"
             />
-          </div> */}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="unit" className="text-xs uppercase tracking-wider">
@@ -285,7 +288,8 @@ export function CreditNoteCalculator() {
                 折讓單 = (A重量 - B重量) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                稅金 = round(N × A重量 × 0.05) - round(N × B重量 × 0.05)
+                稅金 = round(N × A重量 × 0.05 * 單價) - round(N × B重量 × 0.05 *
+                單價)
               </p>
             </div>
 
@@ -295,7 +299,8 @@ export function CreditNoteCalculator() {
                 折讓單 = (A平方公尺 - B平方公尺) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                稅金 = round(N × A平方公尺 × 0.05) - round(N × B平方公尺 × 0.05)
+                稅金 = round(N × A平方公尺 × 0.05 * 單價) - round(N × B平方公尺
+                × 0.05 * 單價)
               </p>
             </div>
           </div>
