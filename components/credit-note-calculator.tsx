@@ -24,6 +24,7 @@ export function CreditNoteCalculator() {
   const [density, setDensity] = useState<number>(1.2); // g/cm³ default 1.2
   const [widthA, setWidthA] = useState<number>(0); // mm
   const [widthB, setWidthB] = useState<number>(0); // mm
+  const [salesOrder, setSalesOrder] = useState<number>(0);
 
   // helper: parse inputs to safe numbers
   const p = isNaN(price) ? 0 : price;
@@ -33,6 +34,7 @@ export function CreditNoteCalculator() {
   const rho = isNaN(density) ? 1.2 : density;
   const WA = isNaN(widthA) ? 0 : widthA;
   const WB = isNaN(widthB) ? 0 : widthB;
+  const so = isNaN(salesOrder) ? 0 : salesOrder;
 
   // Weight formula (kg) - same as existing algorithm
   // W = T(μm) × W(mm) × L(m) × ρ(g/cm³) ÷ 1000 ÷ 1000
@@ -49,13 +51,12 @@ export function CreditNoteCalculator() {
 
   if (unit === "KG") {
     discount = (weightA - weightB) * q * p;
-    tax =
-      Math.round(q * weightA * 0.05 * p) - Math.round(q * weightB * 0.05 * p);
   } else {
     // M2
     discount = (areaA - areaB) * q * p;
-    tax = Math.round(q * areaA * 0.05 * p) - Math.round(q * areaB * 0.05 * p);
+    tax = 1;
   }
+  tax = Math.round((so - discount) * 0.05) - discount;
 
   return (
     <div className="border-2 border-secondary p-6 bg-card">
@@ -210,6 +211,22 @@ export function CreditNoteCalculator() {
               className="border-2 border-secondary bg-background"
             />
           </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="salesOrder"
+              className="text-xs uppercase tracking-wider"
+            >
+              銷貨單金額（元）
+            </Label>
+            <Input
+              id="salesOrder"
+              type="number"
+              value={salesOrder || ""}
+              onChange={(e) => setSalesOrder(parseFloat(e.target.value) || 0)}
+              placeholder="例：10000"
+              className="border-2 border-secondary bg-background"
+            />
+          </div>
         </div>
 
         {/* Results */}
@@ -223,10 +240,8 @@ export function CreditNoteCalculator() {
               A 膠捲
             </p>
             <p className="text-2xl font-bold text-primary">
-              {weightA.toFixed(2)} <span className="text-sm">kg</span>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {areaA.toFixed(2)} m²
+              {weightA.toFixed(2)} <span className="text-sm">kg</span>{" "}
+              {areaA.toFixed(2)} <span className="text-sm">m²</span>{" "}
             </p>
           </div>
 
@@ -235,11 +250,10 @@ export function CreditNoteCalculator() {
               B 膠捲
             </p>
             <p className="text-2xl font-bold text-secondary">
-              {weightB.toFixed(2)} <span className="text-sm">kg</span>
+              {weightB.toFixed(2)} <span className="text-sm">kg</span>{" "}
+              {areaB.toFixed(2)} <span className="text-sm">m²</span>
             </p>
-            <p className="text-sm text-muted-foreground">
-              {areaB.toFixed(2)} m²
-            </p>
+            <p className="text-sm text-muted-foreground"></p>
           </div>
 
           <div className="border-2 border-primary bg-primary/10 p-4">
@@ -257,6 +271,19 @@ export function CreditNoteCalculator() {
             </p>
             <p className="text-2xl font-bold text-secondary">
               {tax.toFixed(2)} <span className="text-sm">元</span>
+            </p>
+          </div>
+
+          <div className="border-2 border-primary bg-primary/10 p-4">
+            <p className="text-xs uppercase tracking-wider text-primary mb-1">
+              ERP複製文字
+            </p>
+            <p className="text-2xl font-bold text-primary">
+              以{widthA}代{widthB}*{q}R(
+              {unit === "KG"
+                ? `${weightA} - ${weightB}`
+                : `${areaA} - ${areaB}`}
+              ) * {p} = {discount}
             </p>
           </div>
         </div>
@@ -299,8 +326,7 @@ export function CreditNoteCalculator() {
                 折讓單 = (A平方公尺 - B平方公尺) × N
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                稅金 = round(N × A平方公尺 × 0.05 * 單價) - round(N × B平方公尺
-                × 0.05 * 單價)
+                稅金 = round((銷貨單金額 - 折讓單金額) × 0.05) - 折讓單金額
               </p>
             </div>
           </div>
