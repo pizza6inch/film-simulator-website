@@ -72,7 +72,7 @@ export default function FilmRollSimulator() {
       <header className="border-b-2 border-secondary bg-card">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-wide text-secondary">
-            小涵的模擬器
+            膠捲資訊模擬器
           </h1>
           <p className="text-muted-foreground mt-1">
             Film Roll Information Simulator
