@@ -56,7 +56,7 @@ export function CreditNoteCalculator() {
     discount = (areaA - areaB) * q * p;
     tax = 1;
   }
-  tax = Math.round((so - discount) * 0.05) - discount;
+  tax = Math.round(so * 0.05) - Math.round((so - discount) * 0.05);
 
   return (
     <div className="border-2 border-secondary p-6 bg-card">
@@ -281,9 +281,9 @@ export function CreditNoteCalculator() {
             <p className="text-2xl font-bold text-primary">
               以{widthA}代{widthB}*{q}R(
               {unit === "KG"
-                ? `${weightA} - ${weightB}`
-                : `${areaA} - ${areaB}`}
-              ) * {p} = {discount}
+                ? `${weightA.toFixed(2)} - ${weightB.toFixed(2)}kg`
+                : `${areaA.toFixed(2)} - ${areaB.toFixed(2)}m²`}
+              ) * {p} = {discount.toFixed(2)}元
             </p>
           </div>
         </div>
@@ -312,21 +312,22 @@ export function CreditNoteCalculator() {
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (KG)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A重量 - B重量) × N
+                折讓單 = (A重量 - B重量) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                稅金 = round(N × A重量 × 0.05 * 單價) - round(N × B重量 × 0.05 *
-                單價)
+                稅金 = round(銷貨單金額 * 0.05) - round((銷貨單金額 -
+                折讓單金額) × 0.05)
               </p>
             </div>
 
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (M²)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A平方公尺 - B平方公尺) × N
+                折讓單 = (A平方公尺 - B平方公尺) × N × 單價
               </p>
               <p className="text-muted-foreground font-mono text-xs">
-                稅金 = round((銷貨單金額 - 折讓單金額) × 0.05) - 折讓單金額
+                稅金 = round(銷貨單金額 * 0.05) - round((銷貨單金額 -
+                折讓單金額) × 0.05)
               </p>
             </div>
           </div>
