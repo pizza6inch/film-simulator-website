@@ -298,12 +298,12 @@ export function CreditNoteCalculator({
               以{WA}代{WB}*{q}R(
               {unit === "KG"
                 ? `${weightA.toFixed(precision)} - ${weightB.toFixed(
-                    precision,
-                  )}kg`
+                  precision,
+                )}kg`
                 : `${areaA.toFixed(precision)} - ${areaB.toFixed(
-                    precision,
-                  )}m²`}
-              ) * {p} = {discount.toFixed(precision)}元*1R
+                  precision,
+                )}m²`}
+              ) * {p} *1R= {discount.toFixed(precision)}元
             </p>
           </div>
         </div>
