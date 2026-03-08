@@ -85,6 +85,13 @@ export default function FilmRollSimulator() {
         {/* Section 0: Credit Note Calculator */}
         <CreditNoteCalculator />
 
+        {/* Section 0.5: Dong Hong Nylon Credit Note Calculator */}
+        <CreditNoteCalculator
+          title="東鴻尼龍專用(4000M以4060M計，6000M以6100M計)"
+          isSpecial={true}
+          precision={1}
+        />
+
         {/* Section 1: Weight & Dimension Calculator */}
         <FilmRollCalculator
           inputs={inputs}

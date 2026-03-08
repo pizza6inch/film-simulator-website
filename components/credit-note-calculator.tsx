@@ -13,7 +13,17 @@ import {
   SelectLabel,
 } from "@/components/ui/select";
 
-export function CreditNoteCalculator() {
+interface CreditNoteCalculatorProps {
+  title?: string;
+  precision?: number;
+  isSpecial?: boolean;
+}
+
+export function CreditNoteCalculator({
+  title = "折讓單計算器",
+  precision = 2,
+  isSpecial = false,
+}: CreditNoteCalculatorProps) {
   const [unit, setUnit] = useState<"KG" | "M2">("KG");
 
   // Inputs
@@ -36,14 +46,20 @@ export function CreditNoteCalculator() {
   const WB = isNaN(widthB) ? 0 : widthB;
   const so = isNaN(salesOrder) ? 0 : salesOrder;
 
-  // Weight formula (kg) - same as existing algorithm
-  // W = T(μm) × W(mm) × L(m) × ρ(g/cm³) ÷ 1000 ÷ 1000
-  const weightA = (T * WA * L * rho) / 1000 / 1000;
-  const weightB = (T * WB * L * rho) / 1000 / 1000;
+  // Special logic for Dong Hong Nylon if enabled
+  let effectiveLength = L;
+  if (isSpecial) {
+    if (L === 4000) effectiveLength = 4060;
+    else if (L === 6000) effectiveLength = 6100;
+  }
 
-  // Area (m²) = length(m) × width(m) [width(mm) → m]
-  const areaA = L * (WA / 1000);
-  const areaB = L * (WB / 1000);
+  // Weight formula (kg) - same as existing algorithm
+  const weightA = (T * WA * effectiveLength * rho) / 1000 / 1000;
+  const weightB = (T * WB * effectiveLength * rho) / 1000 / 1000;
+
+  // Area (m²) = effectiveLength(m) × width(m) [width(mm) → m]
+  const areaA = effectiveLength * (WA / 1000);
+  const areaB = effectiveLength * (WB / 1000);
 
   // Discount & Tax based on unit
   let discount = 0;
@@ -61,7 +77,7 @@ export function CreditNoteCalculator() {
   return (
     <div className="border-2 border-secondary p-6 bg-card">
       <h2 className="text-xl font-bold uppercase tracking-wide text-secondary mb-6">
-        折讓單計算器
+        {title}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -240,8 +256,8 @@ export function CreditNoteCalculator() {
               A 膠捲
             </p>
             <p className="text-2xl font-bold text-primary">
-              {weightA.toFixed(2)} <span className="text-sm">kg</span>{" "}
-              {areaA.toFixed(2)} <span className="text-sm">m²</span>{" "}
+              {weightA.toFixed(precision)} <span className="text-sm">kg</span>{" "}
+              {areaA.toFixed(precision)} <span className="text-sm">m²</span>{" "}
             </p>
           </div>
 
@@ -250,8 +266,8 @@ export function CreditNoteCalculator() {
               B 膠捲
             </p>
             <p className="text-2xl font-bold text-secondary">
-              {weightB.toFixed(2)} <span className="text-sm">kg</span>{" "}
-              {areaB.toFixed(2)} <span className="text-sm">m²</span>
+              {weightB.toFixed(precision)} <span className="text-sm">kg</span>{" "}
+              {areaB.toFixed(precision)} <span className="text-sm">m²</span>
             </p>
             <p className="text-sm text-muted-foreground"></p>
           </div>
@@ -261,7 +277,7 @@ export function CreditNoteCalculator() {
               折讓單金額
             </p>
             <p className="text-2xl font-bold text-primary">
-              {discount.toFixed(2)} <span className="text-sm">元</span>
+              {discount.toFixed(precision)} <span className="text-sm">元</span>
             </p>
           </div>
 
@@ -270,7 +286,7 @@ export function CreditNoteCalculator() {
               折讓單稅金
             </p>
             <p className="text-2xl font-bold text-secondary">
-              {tax.toFixed(2)} <span className="text-sm">元</span>
+              {tax.toFixed(precision)} <span className="text-sm">元</span>
             </p>
           </div>
 
@@ -279,11 +295,15 @@ export function CreditNoteCalculator() {
               ERP複製文字
             </p>
             <p className="text-2xl font-bold text-primary">
-              以{widthA}代{widthB}*{q}R(
+              以{WA}代{WB}*{q}R(
               {unit === "KG"
-                ? `${weightA.toFixed(2)} - ${weightB.toFixed(2)}kg`
-                : `${areaA.toFixed(2)} - ${areaB.toFixed(2)}m²`}
-              ) * {p} = {discount.toFixed(2)}元
+                ? `${weightA.toFixed(precision)} - ${weightB.toFixed(
+                    precision,
+                  )}kg`
+                : `${areaA.toFixed(precision)} - ${areaB.toFixed(
+                    precision,
+                  )}m²`}
+              ) * {p} = {discount.toFixed(precision)}元*1R
             </p>
           </div>
         </div>
