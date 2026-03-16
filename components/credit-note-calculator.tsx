@@ -53,26 +53,31 @@ export function CreditNoteCalculator({
     else if (L === 6000) effectiveLength = 6100;
   }
 
-  // Weight formula (kg) - same as existing algorithm
-  const weightA = (T * WA * effectiveLength * rho) / 1000 / 1000;
-  const weightB = (T * WB * effectiveLength * rho) / 1000 / 1000;
+  // 1. 先計算原始數值 (高精度)
+  const rawWeightA = (T * WA * effectiveLength * rho) / 1000 / 1000;
+  const rawWeightB = (T * WB * effectiveLength * rho) / 1000 / 1000;
+  const rawAreaA = effectiveLength * (WA / 1000);
+  const rawAreaB = effectiveLength * (WB / 1000);
 
-  // Area (m²) = effectiveLength(m) × width(m) [width(mm) → m]
-  const areaA = effectiveLength * (WA / 1000);
-  const areaB = effectiveLength * (WB / 1000);
+  // 2. 根據 precision 進行四捨五入 (轉回數字)，這是解決 199.5 vs 198.2 的關鍵
+  // 這樣 weightA 就會是 73.0 而不是 72.98xxxx
+  const weightA = Number(rawWeightA.toFixed(precision));
+  const weightB = Number(rawWeightB.toFixed(precision));
+  const areaA = Number(rawAreaA.toFixed(precision));
+  const areaB = Number(rawAreaB.toFixed(precision));
 
-  // Discount & Tax based on unit
+  // 3. 折讓金額計算
   let discount = 0;
-  let tax = 0;
-
   if (unit === "KG") {
+    // 使用已經 rounded 的數值相減： (73.0 - 70.9) * 95 * 單價
     discount = (weightA - weightB) * q * p;
   } else {
-    // M2
+    // M2 同理
     discount = (areaA - areaB) * q * p;
-    tax = 1;
   }
-  tax = Math.round(so * 0.05) - Math.round((so - discount) * 0.05);
+
+  // 4. 稅金計算 (保持 round 邏輯)
+  const tax = Math.round(so * 0.05) - Math.round((so - discount) * 0.05);
 
   return (
     <div className="border-2 border-secondary p-6 bg-card">
