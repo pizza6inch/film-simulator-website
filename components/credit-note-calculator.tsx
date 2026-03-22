@@ -70,10 +70,10 @@ export function CreditNoteCalculator({
   let discount = 0;
   if (unit === "KG") {
     // 使用已經 rounded 的數值相減： (73.0 - 70.9) * 95 * 單價
-    discount = (weightA - weightB) * q * p;
+    discount = Math.round((weightA - weightB) * q * p);
   } else {
     // M2 同理
-    discount = (areaA - areaB) * q * p;
+    discount = Math.round((areaA - areaB) * q * p);
   }
 
   // 4. 稅金計算 (保持 round 邏輯)
@@ -282,7 +282,7 @@ export function CreditNoteCalculator({
               折讓單金額
             </p>
             <p className="text-2xl font-bold text-primary">
-              {discount.toFixed(precision)} <span className="text-sm">元</span>
+              {discount.toLocaleString()} <span className="text-sm">元</span>
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export function CreditNoteCalculator({
               折讓單稅金
             </p>
             <p className="text-2xl font-bold text-secondary">
-              {tax.toFixed(precision)} <span className="text-sm">元</span>
+              {tax.toLocaleString()} <span className="text-sm">元</span>
             </p>
           </div>
 
@@ -308,7 +308,7 @@ export function CreditNoteCalculator({
                 : `${areaA.toFixed(precision)} - ${areaB.toFixed(
                   precision,
                 )}m²`}
-              ) * {p} *1R= {discount.toFixed(precision)}元
+              ) * {p} *1R= {discount.toLocaleString()}元
             </p>
           </div>
         </div>
@@ -337,7 +337,7 @@ export function CreditNoteCalculator({
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (KG)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A重量 - B重量) × N × 單價
+                折讓單 = round((A重量 - B重量) × N × 單價)
               </p>
               <p className="text-muted-foreground font-mono text-xs">
                 稅金 = round(銷貨單金額 * 0.05) - round((銷貨單金額 -
@@ -348,7 +348,7 @@ export function CreditNoteCalculator({
             <div>
               <p className="font-semibold text-secondary mb-1">折讓單 (M²)</p>
               <p className="text-muted-foreground font-mono text-xs">
-                折讓單 = (A平方公尺 - B平方公尺) × N × 單價
+                折讓單 = round((A平方公尺 - B平方公尺) × N × 單價)
               </p>
               <p className="text-muted-foreground font-mono text-xs">
                 稅金 = round(銷貨單金額 * 0.05) - round((銷貨單金額 -
