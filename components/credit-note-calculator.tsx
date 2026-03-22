@@ -20,13 +20,14 @@ type ProductPreset = {
   length: number;
   thickness: number;
   density: number;
+  calculationMode?: "default" | "tonghong";
 };
 
 const PRODUCT_PRESETS: ProductPreset[] = [
-  { id: "custom", name: "自訂", length: 0, thickness: 0, density: 1.2 },
-  { id: "va107", name: "VA107", erpName: "VA107", length: 4000, thickness: 12, density: 1.4 },
-  { id: "sp-r", name: "SP-R", erpName: "SP-R", length: 4000, thickness: 15, density: 1.17 },
-  { id: "ony-15um", name: "15um東鴻尼龍ONY", erpName: "ONY", length: 6100, thickness: 15, density: 1.14 },
+  { id: "custom", name: "自訂", length: 0, thickness: 0, density: 1.2, calculationMode: "default" },
+  { id: "va107", name: "VA107", erpName: "VA107", length: 4000, thickness: 12, density: 1.4, calculationMode: "default" },
+  { id: "sp-r", name: "SP-R", erpName: "SP-R", length: 4000, thickness: 15, density: 1.17, calculationMode: "default" },
+  { id: "ony-15um", name: "15um東鴻尼龍ONY", erpName: "ONY", length: 6100, thickness: 15, density: 1.14, calculationMode: "tonghong" },
 ];
 
 interface CreditNoteCalculatorProps {
@@ -73,9 +74,19 @@ export function CreditNoteCalculator({
   const WB = isNaN(widthB) ? 0 : widthB;
   const so = isNaN(salesOrder) ? 0 : salesOrder;
 
+  // 取得目前選定的預設值狀態
+  const selectedPresetData = PRODUCT_PRESETS.find((p) => p.id === selectedPreset);
+  const isTonghongPreset = selectedPresetData?.calculationMode === "tonghong";
+  const erpPrefix = selectedPresetData?.erpName || "";
+
+  // 決定最終套用的邏輯：若是由外部傳入 isSpecial 或是選中了東鴻尼龍 preset，皆啟用特殊邏輯
+  const activeIsSpecial = isSpecial || isTonghongPreset;
+  // 小數位數：如果是東鴻尼龍模式，強制為 1，否則使用傳入的 precision (預設 2)
+  const activePrecision = activeIsSpecial ? 1 : precision;
+
   // Special logic for Dong Hong Nylon if enabled
   let effectiveLength = L;
-  if (isSpecial) {
+  if (activeIsSpecial) {
     if (L === 4000) effectiveLength = 4060;
     else if (L === 6000) effectiveLength = 6100;
   }
@@ -86,12 +97,12 @@ export function CreditNoteCalculator({
   const rawAreaA = effectiveLength * (WA / 1000);
   const rawAreaB = effectiveLength * (WB / 1000);
 
-  // 2. 根據 precision 進行四捨五入 (轉回數字)，這是解決 199.5 vs 198.2 的關鍵
+  // 2. 根據 activePrecision 進行四捨五入 (轉回數字)，這是解決 199.5 vs 198.2 的關鍵
   // 這樣 weightA 就會是 73.0 而不是 72.98xxxx
-  const weightA = Number(rawWeightA.toFixed(precision));
-  const weightB = Number(rawWeightB.toFixed(precision));
-  const areaA = Number(rawAreaA.toFixed(precision));
-  const areaB = Number(rawAreaB.toFixed(precision));
+  const weightA = Number(rawWeightA.toFixed(activePrecision));
+  const weightB = Number(rawWeightB.toFixed(activePrecision));
+  const areaA = Number(rawAreaA.toFixed(activePrecision));
+  const areaB = Number(rawAreaB.toFixed(activePrecision));
 
   // 3. 折讓金額計算
   let discount = 0;
@@ -105,9 +116,6 @@ export function CreditNoteCalculator({
 
   // 4. 稅金計算 (保持 round 邏輯)
   const tax = Math.round(so * 0.05) - Math.round((so - discount) * 0.05);
-
-  const selectedPresetData = PRODUCT_PRESETS.find((p) => p.id === selectedPreset);
-  const erpPrefix = selectedPresetData?.erpName || "";
 
   return (
     <div className="border-2 border-secondary p-6 bg-card">
@@ -322,8 +330,8 @@ export function CreditNoteCalculator({
               A 膠捲
             </p>
             <p className="text-2xl font-bold text-primary">
-              {weightA.toFixed(precision)} <span className="text-sm">kg</span>{" "}
-              {areaA.toFixed(precision)} <span className="text-sm">m²</span>{" "}
+              {weightA.toFixed(activePrecision)} <span className="text-sm">kg</span>{" "}
+              {areaA.toFixed(activePrecision)} <span className="text-sm">m²</span>{" "}
             </p>
           </div>
 
@@ -332,8 +340,8 @@ export function CreditNoteCalculator({
               B 膠捲
             </p>
             <p className="text-2xl font-bold text-secondary">
-              {weightB.toFixed(precision)} <span className="text-sm">kg</span>{" "}
-              {areaB.toFixed(precision)} <span className="text-sm">m²</span>
+              {weightB.toFixed(activePrecision)} <span className="text-sm">kg</span>{" "}
+              {areaB.toFixed(activePrecision)} <span className="text-sm">m²</span>
             </p>
             <p className="text-sm text-muted-foreground"></p>
           </div>
@@ -363,12 +371,10 @@ export function CreditNoteCalculator({
             <p className="text-2xl font-bold text-primary break-all">
               {erpPrefix}以{WA}代{WB}*{q}R(
               {unit === "KG"
-                ? `${weightA.toFixed(precision)} - ${weightB.toFixed(
-                  precision,
+                ? `${weightA.toFixed(activePrecision)} - ${weightB.toFixed(
+                  activePrecision,
                 )}kg`
-                : `${areaA.toFixed(precision)} - ${areaB.toFixed(
-                  precision,
-                )}m²`}
+                : `${Math.round(areaA)} - ${Math.round(areaB)}m²`}
               ) * {p} *{q}R= {discount.toLocaleString()}元
             </p>
           </div>
